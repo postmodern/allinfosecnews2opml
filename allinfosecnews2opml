@@ -1,0 +1,114 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'nokogiri'
+require 'rest-client'
+require 'set'
+require 'date'
+
+EXCLUDE_KEYWORDS = Set[
+  'Hakin9',
+  'KitPloit',
+  'blockchain',
+  'DeFi',
+  'crypto',
+  'AI',
+  'ML'
+]
+
+Feed = Data.define(
+  :type,
+  :website_name,
+  :website_url,
+  :website_summary,
+  :feed_url,
+  :feed_type
+)
+
+def check_url(url)
+  RestClient.head(url)
+rescue RestClient::PermanentRedirect
+  true # treat 308 Permanent Redirects as valid
+rescue => error
+  warn "#{url}: #{error.message}"
+end
+
+def parse_html(text) = Nokogiri::HTML.fragment(text).inner_text
+
+def parse_keywords(text) = text.split(/[\s[:punct:]]+/).to_set
+def check_keywords(text) = parse_keywords(text).intersect?(EXCLUDE_KEYWORDS)
+
+def parse_file
+  section = nil
+
+  File.open('allinfosecnews_sources.md') do |file|
+    # I originally tried parsing the markdown with kramdown, but each_line with
+    # a regex ended up being simpler.
+    file.each_line(chomp: true) do |line|
+      case line
+      when '## InfoSec / Cybersecurity News'     then section = :news
+      when '## InfoSec / Cybersecurity Podcasts' then section = :podcasts
+      when '## InfoSec / Cybersecurity Videos'   then section = :videos
+      when '## InfoSec / Cybersecurity Jobs'     then section = :jobs
+      when '# all InfoSec News - Sources',
+           '## Contents',
+           "**[⬆ back to top](#contents)**",
+           ''
+        # no-op
+      else
+        if (match = line.match(/^-\s+\[(?<link_title>[^\]]+|[^\[]*\[[^\]]*\][^\]]*)\]\((?<link_url>[^\)]+)\)\s+-\s+(?:(?<description>.*)?\s+)?\(RSS feed: (?<feed_url>[^\)]+)\)$/))
+          website_name    = match[:link_title]
+          website_url     = match[:link_url]
+          website_summary = parse_html(match[:description])
+          feed_url        = match[:feed_url]
+          feed_type       = if feed_url.end_with?('atom.xml')
+                              :atom
+                            else
+                              :rss
+                            end
+
+          yield Feed.new(
+            section,
+            website_name,
+            website_url,
+            website_summary,
+            feed_url,
+            feed_type
+          )
+        end
+      end
+    end
+  end
+end
+
+def filter_feeds
+  parse_file do |feed|
+    next if check_keywords(feed.website_name) ||
+            check_keywords(feed.website_summary)
+
+    next unless check_url(feed.feed_url)
+
+    yield feed
+  end
+end
+
+opml = Nokogiri::XML::Builder.new do |xml|
+  xml.opml(version: '2.0') {
+    xml.body {
+      filter_feeds do |feed|
+        if feed.type == :news
+          xml.outline(
+            category: 'InfoSec',
+            htmlUrl:  feed.website_url,
+            text:     feed.website_name,
+            title:    feed.website_name,
+            type:     feed.feed_type,
+            xmlUrl:   feed.feed_url
+          )
+        end
+      end
+    }
+  }
+end
+
+File.write('allinfosecnews.opml',opml.to_xml)
