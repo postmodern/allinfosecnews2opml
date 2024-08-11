@@ -160,7 +160,7 @@
     <outline category="InfoSec" htmlUrl="https://www.reddit.com/r/privacy" text="Privacy &amp;amp; Freedom in the Information Age" title="Privacy &amp;amp; Freedom in the Information Age" type="rss" xmlUrl="https://www.reddit.com/r/privacy"/>
     <outline category="InfoSec" htmlUrl="https://www.producthunt.com" text="Product Hunt &#x2014; The best new products, every day" title="Product Hunt &#x2014; The best new products, every day" type="rss" xmlUrl="https://www.producthunt.com/feed"/>
     <outline category="InfoSec" htmlUrl="https://googleprojectzero.blogspot.com/" text="Project Zero" title="Project Zero" type="rss" xmlUrl="https://googleprojectzero.blogspot.com/feeds/posts/default?alt=rss"/>
-    <outline category="InfoSec" htmlUrl="None" text="Proofpoint News Feed" title="Proofpoint News Feed" type="rss" xmlUrl="https://www.proofpoint.com/us/rss.xml"/>
+    <outline category="InfoSec" htmlUrl="https://www.proofpoint.com/us/newsroom" text="Proofpoint News Feed" title="Proofpoint News Feed" type="rss" xmlUrl="https://www.proofpoint.com/us/rss.xml"/>
     <outline category="InfoSec" htmlUrl="https://blog.rapid7.com/" text="Rapid7 Blog" title="Rapid7 Blog" type="rss" xmlUrl="https://blog.rapid7.com/rss/"/>
     <outline category="InfoSec" htmlUrl="https://www.rcesecurity.com" text="RCE Security" title="RCE Security" type="rss" xmlUrl="https://www.rcesecurity.com/feed"/>
     <outline category="InfoSec" htmlUrl="https://www.redhat.com/en/rss/blog/channel/security" text="Red Hat Security" title="Red Hat Security" type="rss" xmlUrl="https://www.redhat.com/en/rss/blog/channel/security"/>

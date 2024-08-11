@@ -379,7 +379,7 @@ A list of online news & info sources in the InfoSec / Cybersecurity space with t
 
 - [Project Zero](https://googleprojectzero.blogspot.com/) - News and updates from the Project Zero team at Google (RSS feed: https://googleprojectzero.blogspot.com/feeds/posts/default?alt=rss)
 
-- [Proofpoint News Feed](None) - Temporarily Unavailable The website that you&#x27;re trying to reach is having technical difficulties and is currently unavailable. We are aware … (RSS feed: https://www.proofpoint.com/us/rss.xml)
+- [Proofpoint News Feed](https://www.proofpoint.com/us/newsroom) - Temporarily Unavailable The website that you&#x27;re trying to reach is having technical difficulties and is currently unavailable. We are aware … (RSS feed: https://www.proofpoint.com/us/rss.xml)
 
 - [Protos](https://protos.com) - Informed crypto news (RSS feed: https://protos.com/feed)
 
