@@ -11,6 +11,12 @@ reader. Cool! So then I got to thinking, why not try rewriting the script in
 [Ruby], and maybe add better filtering. While I ended up using an ugly regex to
 parse the markdown list entries, it came out alright.
 
+**Edit:** you might want to also look at [ShellShark's InfoSec Blogs List],
+which has *far more* entries; although it's missing some feeds from
+allinfosecnews.
+
+[ShellShark's InfoSec Blog List]: https://shellsharks.com/infosec-blogs
+
 ## Features
 
 * Only includes the news RSS feeds.
