@@ -2,7 +2,7 @@
 
 require 'bundler/setup'
 require 'nokogiri'
-require 'rest-client'
+require 'mechanize'
 require 'set'
 require 'date'
 
@@ -25,10 +25,12 @@ Feed = Data.define(
   :feed_type
 )
 
-def check_url(url)
-  RestClient.head(url)
-rescue RestClient::PermanentRedirect
-  true # treat 308 Permanent Redirects as valid
+@agent = Mechanize.new
+@agent.user_agent_alias = 'Linux Firefox'
+
+def normalize_url(url)
+  # BUG: Mechanize#head is sloooow for some reason
+  @agent.head(url).uri
 rescue => error
   warn "#{url}: #{error.message}"
 end
@@ -83,29 +85,44 @@ end
 
 def filter_feeds
   parse_file do |feed|
+    next unless feed.type == :news # we only care about news feeds
+
     next if check_keywords(feed.website_name) ||
             check_keywords(feed.website_summary)
 
-    next unless check_url(feed.feed_url)
-
     yield feed
+  end
+end
+
+def normalize_feeds
+  filter_feeds do |feed|
+    if (normalized_website_url = normalize_url(feed.website_url))
+      if (normalized_feed_url = normalize_url(feed.feed_url))
+        yield Feed.new(
+          feed.type,
+          feed.website_name,
+          normalized_website_url,
+          feed.website_summary,
+          normalized_feed_url,
+          feed.feed_type
+        )
+      end
+    end
   end
 end
 
 opml = Nokogiri::XML::Builder.new do |xml|
   xml.opml(version: '2.0') {
     xml.body {
-      filter_feeds do |feed|
-        if feed.type == :news
-          xml.outline(
-            category: 'InfoSec',
-            htmlUrl:  feed.website_url,
-            text:     feed.website_name,
-            title:    feed.website_name,
-            type:     feed.feed_type,
-            xmlUrl:   feed.feed_url
-          )
-        end
+      normalize_feeds do |feed|
+        xml.outline(
+          category: 'InfoSec',
+          htmlUrl:  feed.website_url,
+          text:     feed.website_name,
+          title:    feed.website_name,
+          type:     feed.feed_type,
+          xmlUrl:   feed.feed_url
+        )
       end
     }
   }
