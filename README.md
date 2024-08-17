@@ -18,6 +18,9 @@ allinfosecnews.
 
 [shellsharks-feed]: https://shellsharks.com/infosec-blogs
 
+**Edit 2:** I attempted to merge [ShellShark's InfoSec Blog List][shellsharks-feed]
+with the `allinfosecnews.opmp` file. See [allinfosec-combined.opml](allinfosec-combined.opml).
+
 ## Features
 
 * Only includes the news RSS feeds.
