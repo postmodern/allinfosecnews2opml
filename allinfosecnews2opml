@@ -28,9 +28,14 @@ Feed = Data.define(
 @agent = Mechanize.new
 @agent.user_agent_alias = 'Linux Firefox'
 
-def normalize_url(url)
+def normalize_url(url) = URI.parse(url).normalize.to_s
+
+def resolve_url(url)
+  # NOTE: we have to send a `GET` request because some web servers exclude
+  # `HEAD` requests for some reason.
+  #
   # BUG: Mechanize#head is sloooow for some reason
-  @agent.head(url).uri
+  @agent.get(url).uri
 rescue => error
   warn "#{url}: #{error.message}"
 end
@@ -96,17 +101,20 @@ end
 
 def normalize_feeds
   filter_feeds do |feed|
-    if (normalized_website_url = normalize_url(feed.website_url))
-      if (normalized_feed_url = normalize_url(feed.feed_url))
-        yield Feed.new(
-          feed.type,
-          feed.website_name,
-          normalized_website_url,
-          feed.website_summary,
-          normalized_feed_url,
-          feed.feed_type
-        )
-      end
+    if (resolved_feed_url = resolve_url(feed.feed_url))
+      # NOTE: attempt to resolve the website URL, but fall back to the
+      # normalized version
+      resolved_website_url = resolve_url(feed.website_url) || \
+                             normalize_url(feed.website_url)
+
+      yield Feed.new(
+        type:            feed.type,
+        website_name:    feed.website_name,
+        website_url:     resolved_website_url,
+        website_summary: feed.website_summary,
+        feed_url:        resolved_feed_url,
+        feed_type:       feed.feed_type
+      )
     end
   end
 end
