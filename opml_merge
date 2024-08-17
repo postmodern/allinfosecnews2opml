@@ -1,0 +1,93 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'nokogiri'
+require 'mechanize'
+
+unless ARGV.length == 3
+  $stderr.puts "#{File.basename($0)}: OPML_FILE1 OPML_FILE2 OUTPUT_FILE"
+  exit(1)
+end
+
+FeedEntry = Data.define(:category,:html_url,:title,:text,:type,:xml_url)
+
+def parse_feed(file) = Nokogiri::XML(File.open(file))
+
+def parse_feed_entries(opml)
+  opml.xpath('//outline[@htmlUrl and @xmlUrl]').map do |outline|
+    FeedEntry.new(
+      category: outline['category'],
+      html_url: outline['htmlUrl'],
+      title:    outline['title'],
+      text:     outline['text'],
+      type:     outline['type'],
+      xml_url:  outline['xmlUrl']
+    )
+  end
+end
+
+@agent = Mechanize.new
+@agent.user_agent_alias = 'Linux Firefox'
+
+def resolve_url(url)
+  # NOTE: we have to send a `GET` request because some web servers exclude
+  # `HEAD` requests for some reason.
+  #
+  # BUG: Mechanize#head is sloooow for some reason
+  @agent.get(url).uri.to_s
+rescue => error
+  warn "#{url}: #{error.message}"
+end
+
+def normalize_url(url) = URI.parse(url).normalize.to_s
+
+def normalize_feed_entries(feed_entries)
+  feed_entries.map { |feed_entry|
+    # NOTE: only check the feed URL, as some website URLs are down but the
+    # feed URL is still valid.
+    if (resolved_xml_url = resolve_url(feed_entry.xml_url))
+      # NOTE: attempt to resolve the website URL, but fall back to the
+      # normalized version
+      resolved_website_url = resolve_url(feed_entry.html_url) || \
+                             normalize_url(feed_entry.html_url)
+
+      FeedEntry.new(
+        category: feed_entry.category || 'InfoSec',
+        html_url: resolved_website_url,
+        title:    feed_entry.title,
+        text:     feed_entry.text,
+        type:     feed_entry.type || if normalized_xml_url.end_with?('atom.xml')
+                                       'atom'
+                                     else
+                                       'rss'
+                                     end,
+        xml_url:  resolved_xml_url
+      )
+    end
+  }.compact
+end
+
+opml1 = parse_feed(ARGV[0])
+opml2 = parse_feed(ARGV[1])
+
+feed_entries1 = normalize_feed_entries(parse_feed_entries(opml1))
+feed_entries2 = normalize_feed_entries(parse_feed_entries(opml2))
+
+merged_opml = Nokogiri::XML::Builder.new do |xml|
+  xml.opml(version: '2.0') {
+    xml.body {
+      (feed_entries1 | feed_entries2).each do |feed_entry|
+        xml.outline(
+          category: feed_entry.category,
+          htmlUrl:  feed_entry.html_url,
+          title:    feed_entry.title,
+          text:     feed_entry.text,
+          type:     feed_entry.type,
+          xmlUrl:   feed_entry.xml_url
+        )
+      end
+    }
+  }
+end
+
+File.write(ARGV[2],merged_opml.to_xml)
